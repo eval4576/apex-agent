@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>APEX · AI Product Executive Agent · Motionova Labs</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#05050a;--s1:#0a0a12;--s2:#0f0f1a;--s3:#141420;--s4:#1a1a28;
+  --a:#7c5cfc;--a2:#a78bfa;--a3:#c4b5fd;
+  --tx:#eeeef6;--t2:#8888aa;--t3:#4a4a65;
+  --bd:rgba(255,255,255,.06);--bd2:rgba(255,255,255,.11);--bd3:rgba(255,255,255,.18);
+  --green:#10b981;--gold:#f59e0b;--red:#f87171;--blue:#60a5fa;
+  --r:10px;--r2:16px;--r3:22px;
+}
+html{font-size:15px}
+body{background:var(--bg);color:var(--tx);font-family:'Segoe UI',system-ui,sans-serif;line-height:1.6;min-height:100vh;overflow-x:hidden}
+::-webkit-scrollbar{width:3px}
+::-webkit-scrollbar-thumb{background:var(--a);border-radius:2px}
+
+header{border-bottom:1px solid var(--bd);padding:.9rem 2rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:rgba(5,5,10,.94);backdrop-filter:blur(24px);z-index:50}
+.hdr-l{display:flex;align-items:center;gap:.75rem}
+.hdr-logo{font-size:.72rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--a2)}
+.hdr-sep{width:1px;height:16px;background:var(--bd2)}
+.hdr-name{font-size:.78rem;color:var(--t3)}
+.hdr-r{display:flex;align-items:center;gap:.75rem}
+.status-dot{width:7px;height:7px;border-radius:50%;background:var(--t3)}
+.status-dot.active{background:var(--green);box-shadow:0 0 8px rgba(16,185,129,.5)}
+.status-dot.running{background:var(--gold);box-shadow:0 0 8px rgba(245,158,11,.5);animation:pulse .8s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.status-txt{font-size:.72rem;color:var(--t3)}
+.hdr-badge{font-size:.62rem;background:rgba(124,92,252,.1);border:1px solid rgba(124,92,252,.22);color:var(--a2);padding:.2rem .65rem;border-radius:999px;letter-spacing:.07em;text-transform:uppercase}
+
+.shell{display:grid;grid-template-columns:290px 1fr 300px;min-height:calc(100vh - 53px)}
+
+/* RAIL */
+.stage-rail{border-right:1px solid var(--bd);padding:1.4rem 1.1rem;display:flex;flex-direction:column;gap:.25rem;overflow-y:auto;background:var(--s1)}
+.rail-label{font-size:.58rem;letter-spacing:.22em;text-transform:uppercase;color:var(--t3);padding:.3rem .5rem;margin-bottom:.3rem}
+.stage-item{display:flex;align-items:flex-start;gap:.65rem;padding:.7rem .75rem;border-radius:var(--r);border:1px solid transparent;transition:all .2s}
+.stage-item.done{border-color:rgba(16,185,129,.15);background:rgba(16,185,129,.04)}
+.stage-item.active{border-color:rgba(124,92,252,.3);background:rgba(124,92,252,.07)}
+.stage-item.pending{opacity:.38}
+.stage-icon{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:.78rem;flex-shrink:0;border:1px solid var(--bd2);background:var(--s2)}
+.stage-item.done .stage-icon{background:rgba(16,185,129,.1);border-color:rgba(16,185,129,.25)}
+.stage-item.active .stage-icon{background:rgba(124,92,252,.15);border-color:rgba(124,92,252,.35)}
+.stage-info{flex:1;min-width:0}
+.stage-num{font-size:.58rem;letter-spacing:.14em;text-transform:uppercase;color:var(--t3);margin-bottom:.08rem}
+.stage-item.done .stage-num{color:var(--green)}
+.stage-item.active .stage-num{color:var(--a2)}
+.stage-title{font-size:.78rem;font-weight:700;color:var(--t2);line-height:1.2}
+.stage-item.done .stage-title,.stage-item.active .stage-title{color:var(--tx)}
+.stage-principle{font-size:.67rem;color:var(--t3);margin-top:.18rem;line-height:1.4;font-style:italic}
+.stage-item.active .stage-principle{color:var(--t2)}
+.stage-status{font-size:.6rem;margin-top:.25rem;font-weight:600}
+.stage-item.done .stage-status{color:var(--green)}
+.stage-item.active .stage-status{color:var(--a2)}
+.conf-bar{height:2px;background:var(--bd);border-radius:1px;margin-top:.35rem;overflow:hidden}
+.conf-fill{height:100%;border-radius:1px;transition:width .6s ease}
+.rail-div{height:1px;background:var(--bd);margin:.3rem 0}
+
+/* CENTER */
+.center{display:flex;flex-direction:column;overflow-y:auto;background:var(--bg)}
+.input-panel{padding:1.8rem 2rem;border-bottom:1px solid var(--bd)}
+.ip-top{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:1.4rem;flex-wrap:wrap}
+.ip-title{font-size:1.45rem;font-weight:900;letter-spacing:-.03em;line-height:1.1}
+.ip-title span{background:linear-gradient(110deg,var(--a),var(--a2),var(--a3));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.ip-sub{font-size:.78rem;color:var(--t2);margin-top:.3rem;max-width:440px;line-height:1.6}
+.brief-toggle{display:flex;gap:.4rem;background:var(--s2);border:1px solid var(--bd);border-radius:8px;padding:.28rem}
+.brief-btn{font-size:.68rem;padding:.3rem .7rem;border-radius:6px;border:none;cursor:pointer;font-weight:700;letter-spacing:.04em;text-transform:uppercase;transition:all .2s;background:transparent;color:var(--t3)}
+.brief-btn.active{background:var(--a);color:#fff}
+.brief-lbl{font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;color:var(--t3);margin-bottom:.35rem}
+.ex-strip{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:1.1rem}
+.ex-pill{font-size:.67rem;background:rgba(255,255,255,.03);border:1px solid var(--bd);color:var(--t2);padding:.24rem .6rem;border-radius:6px;cursor:pointer;transition:all .2s}
+.ex-pill:hover{border-color:var(--bd2);color:var(--tx)}
+.ip-grid{display:grid;grid-template-columns:1fr 1fr;gap:.85rem;margin-bottom:.9rem}
+.ip-field{display:flex;flex-direction:column;gap:.35rem}
+.ip-field.full{grid-column:span 2}
+.field-lbl{font-size:.62rem;letter-spacing:.16em;text-transform:uppercase;color:var(--t3)}
+textarea,input,select{width:100%;background:var(--s2);border:1px solid var(--bd);color:var(--tx);padding:.68rem .88rem;border-radius:var(--r);font-size:.82rem;font-family:inherit;outline:none;transition:border .2s;-webkit-appearance:none;resize:vertical}
+textarea:focus,input:focus,select:focus{border-color:rgba(124,92,252,.45)}
+textarea::placeholder{color:var(--t3);line-height:1.6}
+select option{background:var(--s2)}
+.run-btn{width:100%;background:linear-gradient(135deg,var(--a),#5835d0);color:#fff;padding:.9rem;border-radius:var(--r2);border:none;font-size:.92rem;font-weight:800;cursor:pointer;transition:all .28s;letter-spacing:.03em;display:flex;align-items:center;justify-content:center;gap:.6rem}
+.run-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 14px 40px rgba(124,92,252,.35)}
+.run-btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
+
+.stage-output{padding:1.8rem 2rem;display:flex;flex-direction:column;gap:1.3rem;min-height:280px}
+.so-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:260px;text-align:center;gap:.7rem;opacity:.32}
+.so-empty p{font-size:.8rem;color:var(--t2);max-width:290px;line-height:1.65}
+
+/* STAGE BLOCKS */
+.stage-block{border:1px solid var(--bd);border-radius:var(--r3);overflow:hidden;animation:fadeUp .35s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.sb-header{padding:1rem 1.4rem;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:.7rem}
+.sb-ico{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.88rem;flex-shrink:0}
+.sb-titles{flex:1}
+.sb-stage{font-size:.58rem;letter-spacing:.18em;text-transform:uppercase;margin-bottom:.08rem}
+.sb-title{font-size:.86rem;font-weight:700}
+.sb-conf{display:flex;align-items:center;gap:.45rem;margin-left:auto}
+.conf-label{font-size:.6rem;color:var(--t3);letter-spacing:.06em;text-transform:uppercase}
+.conf-badge{font-size:.7rem;font-weight:800;padding:.2rem .6rem;border-radius:999px}
+.conf-high{background:rgba(16,185,129,.1);color:var(--green);border:1px solid rgba(16,185,129,.22)}
+.conf-med{background:rgba(245,158,11,.1);color:var(--gold);border:1px solid rgba(245,158,11,.22)}
+.conf-low{background:rgba(248,113,113,.1);color:var(--red);border:1px solid rgba(248,113,113,.22)}
+.sb-body{padding:1.2rem 1.4rem;display:flex;flex-direction:column;gap:.9rem}
+
+.stage-block.s1 .sb-header{background:rgba(96,165,250,.04)}.stage-block.s1 .sb-ico{background:rgba(96,165,250,.1);border:1px solid rgba(96,165,250,.2)}.stage-block.s1 .sb-stage{color:var(--blue)}
+.stage-block.s2 .sb-header{background:rgba(124,92,252,.04)}.stage-block.s2 .sb-ico{background:rgba(124,92,252,.1);border:1px solid rgba(124,92,252,.2)}.stage-block.s2 .sb-stage{color:var(--a2)}
+.stage-block.s3 .sb-header{background:rgba(16,185,129,.04)}.stage-block.s3 .sb-ico{background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.2)}.stage-block.s3 .sb-stage{color:var(--green)}
+.stage-block.s4 .sb-header{background:rgba(248,113,113,.04)}.stage-block.s4 .sb-ico{background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.2)}.stage-block.s4 .sb-stage{color:var(--red)}
+.stage-block.s5 .sb-header{background:rgba(245,158,11,.04)}.stage-block.s5 .sb-ico{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2)}.stage-block.s5 .sb-stage{color:var(--gold)}
+.stage-block.s6 .sb-header{background:rgba(196,181,253,.04)}.stage-block.s6 .sb-ico{background:rgba(196,181,253,.1);border:1px solid rgba(196,181,253,.2)}.stage-block.s6 .sb-stage{color:var(--a3)}
+
+/* ATOMS */
+.prose{font-size:.83rem;color:var(--t2);line-height:1.75}
+.kv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:.65rem}
+.kv{background:var(--s2);border:1px solid var(--bd);border-radius:var(--r);padding:.85rem .95rem}
+.kv-k{font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;color:var(--t3);margin-bottom:.22rem}
+.kv-v{font-size:.84rem;font-weight:700;color:var(--tx)}
+.kv-sub{font-size:.7rem;color:var(--t3);margin-top:.12rem}
+.theme-list{display:flex;flex-direction:column;gap:.55rem}
+.theme-row{background:var(--s2);border:1px solid var(--bd);border-radius:var(--r);padding:.85rem 1rem;transition:border .2s}
+.theme-row:hover{border-color:var(--bd2)}
+.theme-top{display:flex;align-items:center;gap:.6rem;margin-bottom:.3rem;flex-wrap:wrap}
+.theme-name{font-size:.84rem;font-weight:700;flex:1}
+.badge{font-size:.62rem;padding:.16rem .5rem;border-radius:999px;font-weight:700;border:1px solid;white-space:nowrap}
+.freq-h{background:rgba(124,92,252,.1);color:var(--a2);border-color:rgba(124,92,252,.25)}
+.freq-m{background:rgba(245,158,11,.08);color:var(--gold);border-color:rgba(245,158,11,.22)}
+.freq-l{background:rgba(96,165,250,.08);color:var(--blue);border-color:rgba(96,165,250,.2)}
+.sev-c{background:rgba(248,113,113,.08);color:var(--red);border-color:rgba(248,113,113,.2)}
+.sev-m{background:rgba(245,158,11,.08);color:var(--gold);border-color:rgba(245,158,11,.2)}
+.sev-l{background:rgba(16,185,129,.08);color:var(--green);border-color:rgba(16,185,129,.18)}
+.theme-insight{font-size:.77rem;color:var(--t2);line-height:1.6;margin-bottom:.3rem}
+.theme-quote{font-size:.73rem;color:var(--t3);font-style:italic;padding:.32rem .65rem;border-left:2px solid var(--a);background:rgba(124,92,252,.04);border-radius:0 5px 5px 0}
+.conflict-box{background:rgba(248,113,113,.05);border:1px solid rgba(248,113,113,.2);border-radius:var(--r);padding:.9rem 1rem}
+.conflict-lbl{font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--red);margin-bottom:.35rem;font-weight:700}
+.conflict-txt{font-size:.78rem;color:var(--t2);line-height:1.65}
+.minority-box{background:rgba(245,158,11,.04);border:1px solid rgba(245,158,11,.18);border-radius:var(--r);padding:.9rem 1rem}
+.minority-lbl{font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);margin-bottom:.35rem;font-weight:700}
+.minority-txt{font-size:.78rem;color:var(--t2);line-height:1.65}
+.anti-box{background:rgba(96,165,250,.04);border:1px solid rgba(96,165,250,.16);border-radius:var(--r);padding:.85rem 1rem}
+.anti-lbl{font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;color:var(--blue);margin-bottom:.32rem;font-weight:700}
+.anti-txt{font-size:.76rem;color:var(--t3);line-height:1.6;font-style:italic}
+.opp-table{width:100%;border-collapse:collapse}
+.opp-table th{font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--t3);padding:.48rem .75rem;text-align:left;border-bottom:1px solid var(--bd);white-space:nowrap}
+.opp-table td{padding:.65rem .75rem;border-bottom:1px solid var(--bd);vertical-align:top;font-size:.78rem;color:var(--t2)}
+.opp-table tr:last-child td{border-bottom:none}
+.opp-table tr:hover td{background:rgba(255,255,255,.015)}
+.opp-name{font-weight:700;color:var(--tx);margin-bottom:.18rem}
+.opp-why{font-size:.71rem;color:var(--t3);line-height:1.4}
+.score-ring{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;font-size:.76rem;font-weight:900;border:2px solid}
+.score-h{color:var(--green);border-color:rgba(16,185,129,.4);background:rgba(16,185,129,.08)}
+.score-m{color:var(--gold);border-color:rgba(245,158,11,.4);background:rgba(245,158,11,.08)}
+.score-l{color:var(--blue);border-color:rgba(96,165,250,.3);background:rgba(96,165,250,.06)}
+.devil-case{background:rgba(248,113,113,.04);border:1px solid rgba(248,113,113,.18);border-radius:var(--r);padding:.9rem 1.1rem;margin-bottom:.65rem}
+.devil-title{font-size:.73rem;font-weight:700;color:var(--red);margin-bottom:.35rem}
+.devil-txt{font-size:.78rem;color:var(--t2);line-height:1.65}
+.verdict-box{background:rgba(16,185,129,.04);border:1px solid rgba(16,185,129,.2);border-radius:var(--r);padding:.9rem 1.1rem}
+.verdict-lbl{font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;color:var(--green);margin-bottom:.32rem;font-weight:700}
+.verdict-txt{font-size:.8rem;color:var(--t2);line-height:1.7}
+.strategy-bet{background:linear-gradient(135deg,rgba(124,92,252,.08),rgba(5,5,10,.5));border:1px solid rgba(124,92,252,.25);border-radius:var(--r2);padding:1.2rem 1.4rem}
+.bet-lbl{font-size:.6rem;letter-spacing:.18em;text-transform:uppercase;color:var(--a);margin-bottom:.35rem;font-weight:700}
+.bet-title{font-size:1rem;font-weight:800;letter-spacing:-.02em;margin-bottom:.35rem}
+.bet-hyp{font-size:.78rem;color:var(--t2);line-height:1.7}
+.sg-grid{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
+.sg-card{background:var(--s2);border:1px solid var(--bd);border-radius:var(--r);padding:.9rem 1rem}
+.sg-lbl{font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;color:var(--t3);margin-bottom:.4rem;font-weight:700}
+.sg-item{display:flex;gap:.45rem;font-size:.76rem;color:var(--t2);margin-bottom:.3rem;align-items:flex-start;line-height:1.5}
+.sg-item:last-child{margin-bottom:0}
+.sg-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;margin-top:.45rem}
+.kill-box{background:rgba(248,113,113,.04);border:1px solid rgba(248,113,113,.18);border-radius:var(--r);padding:.85rem 1rem}
+.kill-lbl{font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;color:var(--red);margin-bottom:.3rem;font-weight:700}
+.kill-txt{font-size:.76rem;color:var(--t2);line-height:1.6}
+.brief-section{background:var(--s2);border:1px solid var(--bd);border-radius:var(--r);padding:1rem 1.2rem}
+.brief-sec-lbl{font-size:.6rem;letter-spacing:.18em;text-transform:uppercase;color:var(--a3);margin-bottom:.45rem;font-weight:700}
+.brief-sec-body{font-size:.81rem;color:var(--t2);line-height:1.75}
+.ask-box{background:linear-gradient(135deg,rgba(124,92,252,.07),transparent);border:1px solid rgba(124,92,252,.2);border-radius:var(--r2);padding:1.1rem 1.3rem}
+.brief-actions{display:flex;gap:.55rem;flex-wrap:wrap}
+.b-act{padding:.42rem .9rem;border-radius:8px;font-size:.73rem;font-weight:600;cursor:pointer;transition:all .2s;border:1px solid var(--bd2);background:transparent;color:var(--t2)}
+.b-act:hover{color:var(--tx);background:rgba(255,255,255,.04)}
+.b-act.primary{background:var(--a);color:#fff;border-color:transparent}
+.b-act.primary:hover{background:var(--a2)}
+
+/* TRACE */
+.trace-panel{border-left:1px solid var(--bd);background:var(--s1);display:flex;flex-direction:column;overflow:hidden}
+.trace-hdr{padding:.9rem 1.1rem;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:.55rem;flex-shrink:0}
+.trace-ico{font-size:.82rem}
+.trace-title{font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--t2)}
+.trace-live{font-size:.58rem;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.2);color:var(--green);padding:.14rem .48rem;border-radius:999px;margin-left:auto;letter-spacing:.06em;text-transform:uppercase}
+.trace-body{flex:1;overflow-y:auto;padding:.9rem;display:flex;flex-direction:column;gap:.5rem}
+.trace-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:180px;text-align:center;gap:.45rem;opacity:.28}
+.trace-empty p{font-size:.72rem;color:var(--t3);line-height:1.5}
+.trace-entry{border-radius:var(--r);overflow:hidden;animation:fadeUp .22s ease;border:1px solid var(--bd)}
+.te-head{padding:.48rem .8rem;display:flex;align-items:center;gap:.45rem;border-bottom:1px solid var(--bd)}
+.te-stage{font-size:.58rem;letter-spacing:.12em;text-transform:uppercase;font-weight:700}
+.te-type{font-size:.6rem;color:var(--t3);margin-left:auto}
+.te-body{padding:.6rem .8rem;font-size:.72rem;color:var(--t3);line-height:1.65}
+.te-body strong{color:var(--t2)}
+.te-body em{color:var(--t3);font-style:italic}
+.te-ingest .te-head{background:rgba(96,165,250,.05)}.te-ingest .te-stage{color:var(--blue)}
+.te-synth .te-head{background:rgba(124,92,252,.05)}.te-synth .te-stage{color:var(--a2)}
+.te-diag .te-head{background:rgba(16,185,129,.05)}.te-diag .te-stage{color:var(--green)}
+.te-devil .te-head{background:rgba(248,113,113,.05)}.te-devil .te-stage{color:var(--red)}
+.te-strat .te-head{background:rgba(245,158,11,.05)}.te-strat .te-stage{color:var(--gold)}
+.te-brief .te-head{background:rgba(196,181,253,.05)}.te-brief .te-stage{color:var(--a3)}
+.te-conflict .te-head{background:rgba(248,113,113,.08)}.te-conflict .te-stage{color:var(--red)}
+.te-revision .te-head{background:rgba(245,158,11,.08)}.te-revision .te-stage{color:var(--gold)}
+
+.stage-loading{display:flex;align-items:center;gap:.85rem;padding:1.4rem;background:var(--s2);border:1px solid var(--bd);border-radius:var(--r2)}
+.spin{width:20px;height:20px;border:2px solid var(--bd2);border-top-color:var(--a);border-radius:50%;animation:spin .75s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+.sl-txt{font-size:.8rem;color:var(--t2);animation:fp 1.6s ease-in-out infinite}
+.sl-sub{font-size:.7rem;color:var(--t3);margin-top:.18rem}
+@keyframes fp{0%,100%{opacity:.4}50%{opacity:1}}
+
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--s3);border:1px solid var(--bd2);border-radius:10px;padding:.65rem 1rem;font-size:.76rem;color:var(--tx);opacity:0;transform:translateY(6px);transition:all .3s;pointer-events:none;z-index:200}
+.toast.show{opacity:1;transform:translateY(0)}
+
+@media(max-width:1100px){.shell{grid-template-columns:230px 1fr 250px}}
+@media(max-width:900px){.shell{grid-template-columns:1fr}.stage-rail,.trace-panel{display:none}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hdr-l">
+    <div class="hdr-logo">Motionova Labs</div>
+    <div class="hdr-sep"></div>
+    <div class="hdr-name">AI PM Toolkit</div>
+  </div>
+  <div class="hdr-r">
+    <div class="status-dot" id="statusDot"></div>
+    <div class="status-txt" id="statusTxt">Ready</div>
+    <div class="hdr-badge">APEX Agent v1.0</div>
+  </div>
+</header>
+
+<div class="shell">
+
+  <!-- RAIL -->
+  <div class="stage-rail">
+    <div class="rail-label">Agent Pipeline</div>
+    <div class="stage-item pending" id="rail-1">
+      <div class="stage-icon">📥</div>
+      <div class="stage-info">
+        <div class="stage-num">Stage 01</div>
+        <div class="stage-title">Signal Ingest</div>
+        <div class="stage-principle">"Real signal is messy. Elite PMs reason through noise."</div>
+        <div class="stage-status" id="rs1"></div>
+        <div class="conf-bar"><div class="conf-fill" id="cf1" style="width:0%;background:var(--blue)"></div></div>
+      </div>
+    </div>
+    <div class="rail-div"></div>
+    <div class="stage-item pending" id="rail-2">
+      <div class="stage-icon">🧩</div>
+      <div class="stage-info">
+        <div class="stage-num">Stage 02</div>
+        <div class="stage-title">Synthesis Engine</div>
+        <div class="stage-principle">"Signal conflict detection separates $150K PMs from $400K PMs."</div>
+        <div class="stage-status" id="rs2"></div>
+        <div class="conf-bar"><div class="conf-fill" id="cf2" style="width:0%;background:var(--a)"></div></div>
+      </div>
+    </div>
+    <div class="rail-div"></div>
+    <div class="stage-item pending" id="rail-3">
+      <div class="stage-icon">🎯</div>
+      <div class="stage-info">
+        <div class="stage-num">Stage 03</div>
+        <div class="stage-title">Strategic Diagnosis</div>
+        <div class="stage-principle">"Knowing what to ignore is as important as knowing what to build."</div>
+        <div class="stage-status" id="rs3"></div>
+        <div class="conf-bar"><div class="conf-fill" id="cf3" style="width:0%;background:var(--green)"></div></div>
+      </div>
+    </div>
+    <div class="rail-div"></div>
+    <div class="stage-item pending" id="rail-4">
+      <div class="stage-icon">⚔️</div>
+      <div class="stage-info">
+        <div class="stage-num">Stage 04</div>
+        <div class="stage-title">Devil's Advocate</div>
+        <div class="stage-principle">"A recommendation that can't survive challenge isn't a recommendation."</div>
+        <div class="stage-status" id="rs4"></div>
+        <div class="conf-bar"><div class="conf-fill" id="cf4" style="width:0%;background:var(--red)"></div></div>
+      </div>
+    </div>
+    <div class="rail-div"></div>
+    <div class="stage-item pending" id="rail-5">
+      <div class="stage-icon">♟️</div>
+      <div class="stage-info">
+        <div class="stage-num">Stage 05</div>
+        <div class="stage-title">Strategic Bet</div>
+        <div class="stage-principle">"Kill criteria show intellectual honesty. VPs notice."</div>
+        <div class="stage-status" id="rs5"></div>
+        <div class="conf-bar"><div class="conf-fill" id="cf5" style="width:0%;background:var(--gold)"></div></div>
+      </div>
+    </div>
+    <div class="rail-div"></div>
+    <div class="stage-item pending" id="rail-6">
+      <div class="stage-icon">📋</div>
+      <div class="stage-info">
+        <div class="stage-num">Stage 06</div>
+        <div class="stage-title">Executive Brief</div>
+        <div class="stage-principle">"Amazon runs on 6-pagers. Google runs on PRFAQs. Know both."</div>
+        <div class="stage-status" id="rs6"></div>
+        <div class="conf-bar"><div class="conf-fill" id="cf6" style="width:0%;background:var(--a3)"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CENTER -->
+  <div class="center">
+    <div class="input-panel">
+      <div class="ip-top">
+        <div>
+          <div class="ip-title">APEX <span>Product Executive Agent</span></div>
+          <div class="ip-sub">Feed raw product signals. Six autonomous reasoning stages execute in sequence — synthesizing, diagnosing, stress-testing, and producing board-ready strategy.</div>
+        </div>
+        <div>
+          <div class="brief-lbl">Executive Brief Format</div>
+          <div class="brief-toggle">
+            <button class="brief-btn active" id="btnAmazon" onclick="setBrief('amazon')">Amazon 6-Pager</button>
+            <button class="brief-btn" id="btnGoogle" onclick="setBrief('google')">Google PRFAQ</button>
+          </div>
+        </div>
+      </div>
+
+      <div style="font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--t3);margin-bottom:.45rem">Load Example Scenario</div>
+      <div class="ex-strip">
+        <div class="ex-pill" onclick="loadEx('marketplace')">🏪 Ghost Kitchen Marketplace</div>
+        <div class="ex-pill" onclick="loadEx('automotive')">🚗 Automotive SaaS (CarRX)</div>
+        <div class="ex-pill" onclick="loadEx('api')">⚡ Platform API Monetization</div>
+        <div class="ex-pill" onclick="loadEx('retention')">📉 Retention Crisis</div>
+      </div>
+
+      <div class="ip-grid">
+        <div class="ip-field full">
+          <div class="field-lbl">Raw Product Signals — paste feedback, support tickets, NPS comments, usage data, sales objections, competitive intel</div>
+          <textarea id="signals" rows="7" placeholder="Paste raw, unstructured product signals here. Mix sources — user quotes, support tickets, NPS verbatims, usage metrics, sales call notes, competitive observations. The messier the better. APEX is built for real-world signal, not clean data."></textarea>
+        </div>
+        <div class="ip-field">
+          <div class="field-lbl">Product Domain</div>
+          <select id="domain">
+            <option>Multi-sided Marketplace</option>
+            <option>Platform API Product</option>
+            <option>B2B SaaS</option>
+            <option>Mobile Consumer App</option>
+            <option>Enterprise SaaS</option>
+            <option>Developer Platform</option>
+          </select>
+        </div>
+        <div class="ip-field">
+          <div class="field-lbl">Strategic Context</div>
+          <select id="context">
+            <option>Pre-Series A — finding PMF</option>
+            <option>Series A/B — scaling growth</option>
+            <option>Series C+ — defending position</option>
+            <option>Enterprise — expanding accounts</option>
+            <option>Turnaround — reversing decline</option>
+          </select>
+        </div>
+        <div class="ip-field">
+          <div class="field-lbl">Primary User Segment</div>
+          <input id="segment" type="text" placeholder="e.g. Ghost kitchen operators, 3–10 brands"/>
+        </div>
+        <div class="ip-field">
+          <div class="field-lbl">North Star Metric</div>
+          <input id="northstar" type="text" placeholder="e.g. GMV per active kitchen location"/>
+        </div>
+      </div>
+      <button class="run-btn" id="runBtn" onclick="runApex()">
+        <span id="runTxt">⚡ Run APEX Agent</span>
+      </button>
+    </div>
+
+    <div class="stage-output" id="stageOutput">
+      <div class="so-empty">
+        <div style="font-size:2.2rem;opacity:.22">⚡</div>
+        <p>Load an example or paste your own signals and run APEX. Six autonomous reasoning stages execute in sequence.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- TRACE -->
+  <div class="trace-panel">
+    <div class="trace-hdr">
+      <div class="trace-ico">🧠</div>
+      <div class="trace-title">Reasoning Trace</div>
+      <div class="trace-live" id="traceLive" style="display:none">Live</div>
+    </div>
+    <div class="trace-body" id="traceBody">
+      <div class="trace-empty">
+        <p>The agent's live reasoning will appear here — every decision, conflict, and revision as it happens.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">Copied ✓</div>
+
+<script>
+// ── BULLETPROOF ARRAY HELPER ──────────────────────────────
+// Every array access goes through this. No exceptions.
+function A(v){return Array.isArray(v)?v:[]}
+function S(v,fallback){return(v!=null&&v!==undefined&&String(v).trim())?String(v):(fallback||'')}
+function N(v,fallback){const n=Number(v);return isNaN(n)?(fallback||0):n}
+
+// ── STATE ─────────────────────────────────────────────────
+let briefFormat='amazon';
+let agentState={};
+
+// ── EXAMPLES ──────────────────────────────────────────────
+const EX={
+  marketplace:{
+    signals:`User feedback (NPS survey, 47 responses, ghost kitchen operators):
+"When I run out of buns on DoorDash I have to manually pause on every platform. By the time I update Grubhub someone's already ordered and I owe them a refund. This happens 3x a week." — Marco, 4 brands, Pasadena
+"My profitability question takes 2 hours every Sunday night. I'm exporting CSVs from three dashboards and combining them in Excel. I'm running a restaurant, not a data team." — Sarah, 2 brands, Chicago
+"Onboarding a new brand takes 3-4 days because I set it up on every platform separately. I've given up launching new concepts because it's not worth the setup time." — James, 6 brands, Austin
+
+Support tickets (last 30 days, 89 tickets):
+- 34 tickets: "Order accepted but item was out of stock" (refund requests)
+- 28 tickets: "How do I pause an item across all platforms at once?" (confusion)
+- 18 tickets: "My revenue numbers don't match what DoorDash/Uber Eats show" (discrepancy)
+
+Sales call notes (6 enterprise prospects):
+"We won't switch unless you have real-time cross-platform inventory sync. That's table stakes." — 15-location operator
+"The reporting story isn't compelling enough for our CFO. We need one P&L view, not three exports." — 8-location operator
+
+Usage data:
+- 68% of operators log into 3+ external dashboards daily
+- Feature request votes: "Unified inventory management" = 847 votes (top by 3x)
+- Power users (10+ brands): 22% of base, 61% of GMV — churn rate 2x average (critical)
+- New operators (first 90 days): 44% activation, down from 61% six months ago
+- Competitor A launched cross-platform inventory sync in Q3 — mentioned unprompted in Chicago market
+- Competitor B raised $40M Series B citing "unified operator dashboard" as core thesis`,
+    domain:'Multi-sided Marketplace',context:'Series A/B — scaling growth',
+    segment:'Ghost kitchen operators managing 2–10 restaurant brands',northstar:'GMV per active kitchen location per month'
+  },
+  automotive:{
+    signals:`Enterprise partner feedback (CarRX dealership managers, 12 interviews):
+"I spend 45 minutes every morning re-entering CarRX bookings into our DMS. Same data, twice. My service advisors refuse to use the app because it's just more work." — Diane, AutoNation, 3 locations
+"When a customer reschedules through the app I'm not always notified. Had a tech waiting 90 minutes last Tuesday." — Tom, regional group, 5 locations
+"The consumer-facing product is great. The manager side feels like an afterthought." — Rachel, independent, 2 locations
+
+NPS verbatims (enterprise segment, NPS = 31, down from 52 six months ago):
+"Would recommend if DMS integration existed." (7/10)
+"Customers love the booking. The backend is painful." (6/10)
+"Losing confidence this will replace our current system." (4/10)
+
+Usage data:
+- DMS manual re-entry: avg 47 min/day per manager
+- App-to-DMS sync errors: 23% of bookings have at least one data discrepancy per week
+- Manager mobile usage: 8% vs 74% consumer usage
+- Pilot churn signal: 3 of 15 enterprise pilots have gone quiet (no login in 14+ days)
+- Consumer NPS: 71 (up from 58) — consumer product is working
+- Enterprise deal loss rate: DMS integration cited as blocker in 8 of last 10 enterprise calls`,
+    domain:'B2B SaaS',context:'Series A/B — scaling growth',
+    segment:'Dealership service managers at enterprise partner groups',northstar:'Enterprise partner retention at 12 months'
+  },
+  api:{
+    signals:`Developer feedback (200+ survey + 14 interviews):
+"The rate limits make it impossible to build anything production-grade. I hit the ceiling in testing." — Developer, fintech startup
+"I'd pay 10x more for a dedicated tier with SLAs. Right now I have no idea what uptime guarantee I'm getting." — CTO, logistics startup
+"Documentation is good but the sandbox doesn't reflect real production behavior so my staging tests don't mean anything." — Developer, healthcare startup
+"I've recommended your API to 3 teams at my company but procurement won't approve it — there's no enterprise contract option." — Staff engineer, Fortune 500
+
+Usage data:
+- 23% of developers hit rate limits at least once per week
+- Sandbox-to-production drop-off: 61% of devs who complete sandbox never go live
+- Top 8% of accounts drive 79% of API calls — on same pricing as small devs
+- Inbound enterprise inquiries: 34 Fortune 500 companies in last quarter, zero closed (no product to sell)
+- Competitor launched Enterprise API SKU last month — appearing in developer Slack communities`,
+    domain:'Platform API Product',context:'Series A/B — scaling growth',
+    segment:'Developers building production applications on the API',northstar:'API calls from production (non-sandbox) applications'
+  },
+  retention:{
+    signals:`Churn interviews (14 churned customers, last 60 days):
+"We never got our team fully onboarded. The champion left and nobody else knew how to use it." — 200-person company
+"The ROI wasn't clear after 90 days. My CFO asked me to justify the spend and I couldn't." — 150-person company
+"We bought it for one use case and discovered too late it didn't do that well." — 400-person company
+"Support response times got worse over 6 months. Small issues became big frustrations." — 300-person company
+
+Internal data:
+- Churn rate: 4.2% monthly (up from 2.1% six months ago — doubled)
+- Time-to-first-value: avg 23 days (top quartile SaaS benchmark: 7 days)
+- Champion turnover: 41% of churned accounts had champion job change 60-90 days before churn
+- Feature adoption: churned accounts used avg 1.8 features vs 4.6 for retained
+- Support CSAT: 61% (down from 78%)
+- Expansion revenue: $0 from accounts in first 90 days
+
+CS team signals:
+"By the time we get an escalation the customer has already decided to leave." — CS Lead
+"Our health score doesn't flag champion turnover as a risk signal. It's the biggest predictor we have." — CS Manager`,
+    domain:'Enterprise SaaS',context:'Turnaround — reversing decline',
+    segment:'Mid-market B2B customers, 150–500 person companies',northstar:'Net Revenue Retention (NRR) at 12 months'
+  }
+};
+
+function loadEx(k){const e=EX[k];if(!e)return;document.getElementById('signals').value=e.signals;document.getElementById('domain').value=e.domain;document.getElementById('context').value=e.context;document.getElementById('segment').value=e.segment;document.getElementById('northstar').value=e.northstar;}
+function setBrief(f){briefFormat=f;document.getElementById('btnAmazon').className='brief-btn'+(f==='amazon'?' active':'');document.getElementById('btnGoogle').className='brief-btn'+(f==='google'?' active':'');}
+
+// ── RAIL ──────────────────────────────────────────────────
+function setRail(n,state,conf){
+  const el=document.getElementById(`rail-${n}`);
+  if(!el)return;
+  el.className=`stage-item ${state}`;
+  const rs=document.getElementById(`rs${n}`);
+  if(rs)rs.textContent=state==='active'?'● Running...':state==='done'?'✓ Complete':'';
+  const cf=document.getElementById(`cf${n}`);
+  if(cf&&conf!==undefined)cf.style.width=Math.min(100,Math.max(0,N(conf)))+'%';
+}
+function setStatus(cls,txt){
+  const d=document.getElementById('statusDot');
+  if(d)d.className='status-dot'+(cls?' '+cls:'');
+  const t=document.getElementById('statusTxt');
+  if(t)t.textContent=txt;
+}
+
+// ── TRACE ─────────────────────────────────────────────────
+function addTrace(type,stage,typeLabel,content){
+  document.getElementById('traceLive').style.display='block';
+  const body=document.getElementById('traceBody');
+  if(body.querySelector('.trace-empty'))body.innerHTML='';
+  const el=document.createElement('div');
+  el.className=`trace-entry te-${type}`;
+  el.innerHTML=`<div class="te-head"><div class="te-stage">${stage}</div><div class="te-type">${typeLabel}</div></div><div class="te-body">${content}</div>`;
+  body.appendChild(el);
+  body.scrollTop=body.scrollHeight;
+}
+
+// ── HELPERS ───────────────────────────────────────────────
+function confClass(n){const v=N(n);if(v>=75)return 'conf-high';if(v>=50)return 'conf-med';return 'conf-low';}
+function scoreClass(n){const v=N(n);if(v>=8)return 'score-h';if(v>=5)return 'score-m';return 'score-l';}
+function freqClass(f){const v=S(f).toLowerCase();if(v.includes('high'))return 'freq-h';if(v.includes('low'))return 'freq-l';return 'freq-m';}
+function sevClass(s){const v=S(s).toLowerCase();if(v.includes('critical')||v.includes('high'))return 'sev-c';if(v.includes('low')||v.includes('minor'))return 'sev-l';return 'sev-m';}
+
+let msgTimer;
+function showLoading(container,msg,sub){
+  removeLoading();
+  const d=document.createElement('div');
+  d.className='stage-loading';d.id='stageLoader';
+  d.innerHTML=`<div class="spin"></div><div><div class="sl-txt">${msg}</div><div class="sl-sub">${sub}</div></div>`;
+  container.appendChild(d);
+}
+function removeLoading(){const e=document.getElementById('stageLoader');if(e)e.remove();clearInterval(msgTimer);}
+
+function appendBlock(html){
+  const out=document.getElementById('stageOutput');
+  const d=document.createElement('div');
+  d.innerHTML=html;
+  if(d.firstElementChild)out.appendChild(d.firstElementChild);
+}
+
+// ── API ───────────────────────────────────────────────────
+async function callClaude(prompt){
+  const res=await fetch("https://api.anthropic.com/v1/messages",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:4000,messages:[{role:"user",content:prompt}]})
+  });
+  const data=await res.json();
+  const raw=data.content.map(b=>b.text||'').join('');
+  const clean=raw.replace(/```json|```/g,'').trim();
+  const start=clean.indexOf('{');
+  const end=clean.lastIndexOf('}');
+  if(start===-1||end===-1)throw new Error('No valid JSON returned');
+  const parsed=JSON.parse(clean.slice(start,end+1));
+  console.log('APEX API response:', JSON.stringify(parsed, null, 2));
+  return parsed;
+}
+
+// ── MAIN ──────────────────────────────────────────────────
+async function runApex(){
+  const signals=document.getElementById('signals').value.trim();
+  if(!signals){document.getElementById('signals').focus();return;}
+  const domain=document.getElementById('domain').value;
+  const context=document.getElementById('context').value;
+  const segment=document.getElementById('segment').value||'users';
+  const northstar=document.getElementById('northstar').value||'primary metric';
+
+  agentState={signals,domain,context,segment,northstar};
+  document.getElementById('runBtn').disabled=true;
+  document.getElementById('runTxt').textContent='Agent Running...';
+  document.getElementById('traceBody').innerHTML='';
+  document.getElementById('traceLive').style.display='none';
+  document.getElementById('stageOutput').innerHTML='';
+  setStatus('running','Agent running');
+  for(let i=1;i<=6;i++)setRail(i,'pending',0);
+  const out=document.getElementById('stageOutput');
+
+  try{
+    // ── S1 ────────────────────────────────────────────────
+    setRail(1,'active');
+    addTrace('ingest','Signal Ingest','Initializing','Parsing raw input — classifying sources, segments, confidence levels before synthesis.');
+    showLoading(out,'Stage 01 · Signal Ingest','Classifying sources, segments, and confidence...');
+
+    const s1=await callClaude(`Analyze these raw product signals. Return ONLY valid JSON, no markdown.
+
+Signals: ${signals}
+Domain: ${domain} | Context: ${context} | Segment: ${segment} | North Star: ${northstar}
+
+JSON structure:
+{
+  "signalCount": 12,
+  "sourceTypes": ["User interviews","Support tickets"],
+  "segmentsCovered": ["Operators","Enterprise"],
+  "signalQuality": "High",
+  "qualityReason": "one sentence",
+  "confidence": 82,
+  "confidenceReason": "one sentence",
+  "keySignalSummary": "two sentences about most important signal",
+  "dataGaps": ["gap one","gap two"],
+  "lowConfidenceFlags": ["flag one"]
+}`);
+
+    agentState.s1=s1;
+    removeLoading();
+    setRail(1,'done',N(s1.confidence));
+    addTrace('ingest','Signal Ingest','Classification complete',`<strong>${N(s1.signalCount)} signals</strong> across ${A(s1.sourceTypes).length} source types. Quality: <strong>${S(s1.signalQuality,'—')}</strong>. Confidence: <strong>${N(s1.confidence)}%</strong>. ${S(s1.confidenceReason)}`);
+    if(A(s1.dataGaps).length)addTrace('ingest','Signal Ingest','Data gaps flagged',A(s1.dataGaps).map(g=>`• ${g}`).join('<br>'));
+
+    appendBlock(`<div class="stage-block s1">
+      <div class="sb-header">
+        <div class="sb-ico">📥</div>
+        <div class="sb-titles"><div class="sb-stage">Stage 01 · Signal Ingest</div><div class="sb-title">Signal Classification Complete</div></div>
+        <div class="sb-conf"><div class="conf-label">Confidence</div><div class="conf-badge ${confClass(N(s1.confidence))}">${N(s1.confidence)}%</div></div>
+      </div>
+      <div class="sb-body">
+        <div class="prose">${S(s1.keySignalSummary,'No summary returned.')}</div>
+        <div class="kv-grid">
+          <div class="kv"><div class="kv-k">Signals</div><div class="kv-v">${N(s1.signalCount,'—')}</div></div>
+          <div class="kv"><div class="kv-k">Source Types</div><div class="kv-v">${A(s1.sourceTypes).length}</div><div class="kv-sub">${A(s1.sourceTypes).join(', ')}</div></div>
+          <div class="kv"><div class="kv-k">Quality</div><div class="kv-v">${S(s1.signalQuality,'—')}</div><div class="kv-sub">${S(s1.qualityReason)}</div></div>
+          <div class="kv"><div class="kv-k">Segments</div><div class="kv-v">${A(s1.segmentsCovered).length}</div><div class="kv-sub">${A(s1.segmentsCovered).join(', ')}</div></div>
+        </div>
+        ${A(s1.dataGaps).length?`<div class="minority-box"><div class="minority-lbl">⚠ Data Gaps</div><div class="minority-txt">${A(s1.dataGaps).map(g=>`• ${g}`).join('<br>')}</div></div>`:''}
+      </div></div>`);
+
+    // ── S2 ────────────────────────────────────────────────
+    setRail(2,'active');
+    addTrace('synth','Synthesis Engine','Running','Clustering JTBD themes. Scanning for segment conflict...');
+    showLoading(out,'Stage 02 · Synthesis Engine','Clustering themes, detecting signal conflicts...');
+
+    const s2=await callClaude(`Cluster these signals into JTBD themes. Return ONLY valid JSON, no markdown.
+
+Signals: ${signals}
+S1 output: ${JSON.stringify(s1)}
+Domain: ${domain} | Segment: ${segment}
+
+JSON structure:
+{
+  "themes": [
+    {"name":"Theme Name","jtbd":"When I X, I want to Y, so I can Z","frequency":"High","severity":"Critical","segments":["ops"],"evidenceQuote":"quote","insight":"PM insight"}
+  ],
+  "conflictDetected": true,
+  "conflict": {"description":"desc","segment1":"seg1","segment1Want":"want1","segment2":"seg2","segment2Want":"want2","resolution":"resolution"},
+  "minoritySignal": {"signal":"signal","reason":"reason"},
+  "confidence": 80,
+  "confidenceReason": "reason",
+  "revisionFromS1": "revision or null"
+}`);
+
+    agentState.s2=s2;
+    removeLoading();
+    setRail(2,'done',N(s2.confidence));
+    addTrace('synth','Synthesis Engine','Themes clustered',`<strong>${A(s2.themes).length} JTBD themes</strong> identified. Conflict: <strong>${s2.conflictDetected?'Yes':'No'}</strong>. Confidence: <strong>${N(s2.confidence)}%</strong>.`);
+    if(s2.conflictDetected&&s2.conflict)addTrace('conflict','Synthesis Engine','⚠ Signal conflict',`<strong>${S(s2.conflict.segment1)}</strong> wants: ${S(s2.conflict.segment1Want)}<br><strong>${S(s2.conflict.segment2)}</strong> wants: ${S(s2.conflict.segment2Want)}<br><strong>Resolution:</strong> ${S(s2.conflict.resolution)}`);
+    if(s2.revisionFromS1&&s2.revisionFromS1!=='null')addTrace('revision','Synthesis Engine','↺ Revising S1',S(s2.revisionFromS1));
+    if(s2.minoritySignal&&s2.minoritySignal.signal)addTrace('synth','Synthesis Engine','Minority signal',`<strong>${S(s2.minoritySignal.signal)}</strong> — ${S(s2.minoritySignal.reason)}`);
+
+    const themesHtml=A(s2.themes).map(t=>`
+      <div class="theme-row">
+        <div class="theme-top">
+          <div class="theme-name">${S(t.name)}</div>
+          <span class="badge ${freqClass(t.frequency)}">${S(t.frequency,'Med')}</span>
+          <span class="badge ${sevClass(t.severity)}">${S(t.severity,'Moderate')}</span>
+        </div>
+        <div class="theme-insight">${S(t.jtbd)}</div>
+        <div class="theme-insight" style="color:var(--t3);font-size:.74rem">${S(t.insight)}</div>
+        ${t.evidenceQuote?`<div class="theme-quote">"${S(t.evidenceQuote)}"</div>`:''}
+      </div>`).join('');
+
+    appendBlock(`<div class="stage-block s2">
+      <div class="sb-header">
+        <div class="sb-ico">🧩</div>
+        <div class="sb-titles"><div class="sb-stage">Stage 02 · Synthesis Engine</div><div class="sb-title">${A(s2.themes).length} JTBD Themes Clustered</div></div>
+        <div class="sb-conf"><div class="conf-label">Confidence</div><div class="conf-badge ${confClass(N(s2.confidence))}">${N(s2.confidence)}%</div></div>
+      </div>
+      <div class="sb-body">
+        <div class="theme-list">${themesHtml||'<div class="prose">No themes extracted.</div>'}</div>
+        ${s2.conflictDetected&&s2.conflict?`<div class="conflict-box"><div class="conflict-lbl">⚠ Signal Conflict Detected</div><div class="conflict-txt"><strong>${S(s2.conflict.segment1)}</strong> wants: ${S(s2.conflict.segment1Want)}<br><strong>${S(s2.conflict.segment2)}</strong> wants: ${S(s2.conflict.segment2Want)}<br><br><strong>PM Resolution:</strong> ${S(s2.conflict.resolution)}</div></div>`:''}
+        ${s2.minoritySignal&&s2.minoritySignal.signal?`<div class="minority-box"><div class="minority-lbl">◎ Minority Signal — Watch</div><div class="minority-txt"><strong>${S(s2.minoritySignal.signal)}</strong><br>${S(s2.minoritySignal.reason)}</div></div>`:''}
+        ${s2.revisionFromS1&&s2.revisionFromS1!=='null'?`<div class="anti-box"><div class="anti-lbl">↺ Revision from Stage 1</div><div class="anti-txt">${S(s2.revisionFromS1)}</div></div>`:''}
+      </div></div>`);
+
+    // ── S3 ────────────────────────────────────────────────
+    setRail(3,'active');
+    addTrace('diag','Strategic Diagnosis','Running','Scoring opportunities on 4-axis model. Building anti-portfolio...');
+    showLoading(out,'Stage 03 · Strategic Diagnosis','Scoring opportunities...');
+
+    const s3=await callClaude(`Score product opportunities. Return ONLY valid JSON, no markdown.
+
+Signals: ${signals}
+Themes: ${JSON.stringify(A(s2.themes))}
+Domain: ${domain} | Context: ${context} | North Star: ${northstar}
+
+JSON structure:
+{
+  "opportunities": [
+    {"name":"Opp name","description":"what to build","frequencyScore":8,"severityScore":9,"revenueScore":7,"alignmentScore":8,"totalScore":8,"effort":"Medium","rationale":"why"}
+  ],
+  "antiPortfolio": ["not building X because Y","not building A because B"],
+  "topOpportunity": "name of top opportunity",
+  "confidence": 80,
+  "confidenceReason": "reason",
+  "conditionThatInvertsConclusion": "what would flip this"
+}`);
+
+    agentState.s3=s3;
+    removeLoading();
+    setRail(3,'done',N(s3.confidence));
+    addTrace('diag','Strategic Diagnosis','Complete',`<strong>${A(s3.opportunities).length} opportunities</strong> scored. Top: <strong>${S(s3.topOpportunity,'—')}</strong>. Confidence: <strong>${N(s3.confidence)}%</strong>.`);
+    addTrace('diag','Strategic Diagnosis','Anti-portfolio',A(s3.antiPortfolio).map(a=>`• ${a}`).join('<br>')||'None');
+
+    const oppsHtml=A(s3.opportunities).sort((a,b)=>N(b.totalScore)-N(a.totalScore)).map(o=>`<tr>
+      <td><div class="opp-name">${S(o.name)}</div><div class="opp-why">${S(o.rationale)}</div></td>
+      <td style="text-align:center"><div class="score-ring ${scoreClass(N(o.totalScore))}">${N(o.totalScore)}</div></td>
+      <td style="text-align:center;font-size:.7rem;color:var(--t3)">${N(o.frequencyScore)}</td>
+      <td style="text-align:center;font-size:.7rem;color:var(--t3)">${N(o.severityScore)}</td>
+      <td style="text-align:center;font-size:.7rem;color:var(--t3)">${N(o.revenueScore)}</td>
+      <td style="text-align:center;font-size:.7rem;color:var(--t3)">${N(o.alignmentScore)}</td>
+      <td><span style="font-size:.68rem;color:var(--t3);border:1px solid var(--bd);border-radius:999px;padding:.16rem .48rem">${S(o.effort)}</span></td>
+    </tr>`).join('');
+
+    appendBlock(`<div class="stage-block s3">
+      <div class="sb-header">
+        <div class="sb-ico">🎯</div>
+        <div class="sb-titles"><div class="sb-stage">Stage 03 · Strategic Diagnosis</div><div class="sb-title">4-Axis Opportunity Scoring</div></div>
+        <div class="sb-conf"><div class="conf-label">Confidence</div><div class="conf-badge ${confClass(N(s3.confidence))}">${N(s3.confidence)}%</div></div>
+      </div>
+      <div class="sb-body">
+        <div style="overflow-x:auto"><table class="opp-table">
+          <thead><tr><th>Opportunity</th><th>Total</th><th>Freq</th><th>Sev</th><th>Rev</th><th>Align</th><th>Effort</th></tr></thead>
+          <tbody>${oppsHtml||'<tr><td colspan="7" style="color:var(--t3);text-align:center">No opportunities returned</td></tr>'}</tbody>
+        </table></div>
+        <div class="anti-box"><div class="anti-lbl">Anti-Portfolio — Explicitly NOT Building</div><div class="anti-txt">${A(s3.antiPortfolio).map(a=>`• ${a}`).join('<br>')||'None specified'}</div></div>
+        <div class="minority-box"><div class="minority-lbl">⚠ Condition That Inverts This Conclusion</div><div class="minority-txt">${S(s3.conditionThatInvertsConclusion,'Not specified')}</div></div>
+      </div></div>`);
+
+    // ── S4 ────────────────────────────────────────────────
+    setRail(4,'active');
+    addTrace('devil',"Devil's Advocate",'Running',`Stress-testing: <strong>${S(s3.topOpportunity,'top opportunity')}</strong>. Building strongest case against it...`);
+    showLoading(out,"Stage 04 · Devil's Advocate",'Challenging the top recommendation...');
+
+    const s4=await callClaude(`Play devil's advocate against this recommendation. Return ONLY valid JSON, no markdown.
+
+Top recommendation: ${S(s3.topOpportunity,'top opportunity')}
+Diagnosis: ${JSON.stringify(s3)}
+Domain: ${domain} | Context: ${context} | North Star: ${northstar}
+
+JSON structure:
+{
+  "challengeArguments": [
+    {"argument":"Challenge title","case":"strongest argument against (2-3 sentences)"},
+    {"argument":"Challenge title 2","case":"argument"}
+  ],
+  "alternativeThesis": "competing strategic approach (2-3 sentences)",
+  "verdictSustained": true,
+  "verdictReasoning": "why recommendation stands or falls (2-3 sentences)",
+  "revisedConfidence": 75,
+  "keyRisk": "single most important risk",
+  "confidence": 80
+}`);
+
+    agentState.s4=s4;
+    removeLoading();
+    setRail(4,'done',N(s4.confidence));
+    addTrace('devil',"Devil's Advocate",'Verdict',`Recommendation <strong style="color:${s4.verdictSustained?'var(--green)':'var(--red)'}">${s4.verdictSustained?'SUSTAINED':'CHALLENGED'}</strong>. Revised confidence: <strong>${N(s4.revisedConfidence)}%</strong>.`);
+
+    const challengesHtml=A(s4.challengeArguments).map(c=>`
+      <div class="devil-case">
+        <div class="devil-title">⚔ ${S(c.argument)}</div>
+        <div class="devil-txt">${S(c.case)}</div>
+      </div>`).join('');
+
+    appendBlock(`<div class="stage-block s4">
+      <div class="sb-header">
+        <div class="sb-ico">⚔️</div>
+        <div class="sb-titles"><div class="sb-stage">Stage 04 · Devil's Advocate</div><div class="sb-title">Stress-Testing: ${S(s3.topOpportunity,'Top Opportunity')}</div></div>
+        <div class="sb-conf"><div class="conf-label">Verdict</div><div class="conf-badge ${s4.verdictSustained?'conf-high':'conf-low'}">${s4.verdictSustained?'Sustained':'Challenged'}</div></div>
+      </div>
+      <div class="sb-body">
+        ${challengesHtml||'<div class="prose">No challenges generated.</div>'}
+        <div class="devil-case"><div class="devil-title">⚔ Alternative Thesis</div><div class="devil-txt">${S(s4.alternativeThesis)}</div></div>
+        <div class="verdict-box">
+          <div class="verdict-lbl">⚖ Verdict — Revised Confidence: ${N(s4.revisedConfidence)}%</div>
+          <div class="verdict-txt">${S(s4.verdictReasoning)}<br><br><strong>Key risk:</strong> ${S(s4.keyRisk)}</div>
+        </div>
+      </div></div>`);
+
+    // ── S5 ────────────────────────────────────────────────
+    setRail(5,'active');
+    addTrace('strat','Strategic Bet','Running','Formulating recommendation. Defining MVP, metrics, kill criteria...');
+    showLoading(out,'Stage 05 · Strategic Bet','Defining the bet and kill criteria...');
+
+    const s5=await callClaude(`Formulate the strategic recommendation. Return ONLY valid JSON, no markdown.
+
+Top opportunity: ${S(s3.topOpportunity)}
+Devil verdict: ${JSON.stringify(s4)}
+Domain: ${domain} | Context: ${context} | North Star: ${northstar}
+
+JSON structure:
+{
+  "strategicBet": "one sharp sentence",
+  "hypothesis": "If we X, then Y will Z, driving northstar by amount, because mechanism",
+  "mvpDefinition": "what MVP includes and excludes",
+  "successMetrics": [
+    {"metric":"metric name","target":"specific target","timeline":"timeframe"}
+  ],
+  "risks": ["risk 1","risk 2","risk 3"],
+  "mitigations": ["mitigation 1","mitigation 2","mitigation 3"],
+  "killCriteria": ["stop condition 1","stop condition 2"],
+  "sprintPlan": [
+    {"phase":"Phase name","weeks":"Week X-Y","deliverable":"what ships"}
+  ],
+  "confidence": 80,
+  "confidenceReason": "reason"
+}`);
+
+    agentState.s5=s5;
+    removeLoading();
+    setRail(5,'done',N(s5.confidence));
+    addTrace('strat','Strategic Bet','Bet formulated',`<strong>${S(s5.strategicBet)}</strong> | Kill criteria: ${A(s5.killCriteria).length} conditions. Confidence: <strong>${N(s5.confidence)}%</strong>`);
+
+    const metricsHtml=A(s5.successMetrics).map(m=>`<div class="kv"><div class="kv-k">${S(m.metric)}</div><div class="kv-v">${S(m.target)}</div><div class="kv-sub">${S(m.timeline)}</div></div>`).join('');
+    const sprintHtml=A(s5.sprintPlan).map(p=>`<div class="sg-item"><div class="sg-dot" style="background:var(--gold)"></div><strong style="color:var(--tx);min-width:75px;flex-shrink:0">${S(p.weeks)}</strong><span>${S(p.phase)}: ${S(p.deliverable)}</span></div>`).join('');
+    const risksHtml=A(s5.risks).map((r,i)=>`<div class="sg-item"><div class="sg-dot" style="background:var(--red)"></div>${S(r)}<span style="color:var(--t3);font-size:.7rem"> → ${S(A(s5.mitigations)[i])}</span></div>`).join('');
+
+    appendBlock(`<div class="stage-block s5">
+      <div class="sb-header">
+        <div class="sb-ico">♟️</div>
+        <div class="sb-titles"><div class="sb-stage">Stage 05 · Strategic Bet</div><div class="sb-title">The Recommendation</div></div>
+        <div class="sb-conf"><div class="conf-label">Confidence</div><div class="conf-badge ${confClass(N(s5.confidence))}">${N(s5.confidence)}%</div></div>
+      </div>
+      <div class="sb-body">
+        <div class="strategy-bet">
+          <div class="bet-lbl">The Strategic Bet</div>
+          <div class="bet-title">${S(s5.strategicBet)}</div>
+          <div class="bet-hyp">${S(s5.hypothesis)}</div>
+        </div>
+        <div class="sg-grid">
+          <div class="sg-card"><div class="sg-lbl" style="color:var(--a2)">MVP Definition</div><div class="sg-item"><div class="sg-dot" style="background:var(--a2)"></div>${S(s5.mvpDefinition)}</div></div>
+          <div class="sg-card"><div class="sg-lbl" style="color:var(--gold)">Sprint Plan</div>${sprintHtml||'<div class="sg-item">Not specified</div>'}</div>
+        </div>
+        ${metricsHtml?`<div class="kv-grid">${metricsHtml}</div>`:''}
+        <div class="sg-card"><div class="sg-lbl" style="color:var(--red)">Risks & Mitigations</div>${risksHtml||'<div class="sg-item">None specified</div>'}</div>
+        <div class="kill-box">
+          <div class="kill-lbl">☠ Kill Criteria — We Stop If:</div>
+          <div class="kill-txt">${A(s5.killCriteria).map(k=>`• ${k}`).join('<br>')||'None specified'}</div>
+        </div>
+      </div></div>`);
+
+    // ── S6 ────────────────────────────────────────────────
+    setRail(6,'active');
+    addTrace('brief','Executive Brief','Running',`Generating ${briefFormat==='amazon'?'Amazon 6-Pager':'Google PRFAQ'}...`);
+    showLoading(out,'Stage 06 · Executive Brief',`Drafting ${briefFormat==='amazon'?'Amazon 6-Pager':'Google PRFAQ'}...`);
+
+    const briefPrompt=briefFormat==='amazon'
+      ?`Write an Amazon 6-Pager executive brief. Return ONLY valid JSON, no markdown.
+
+Context: ${domain} | ${context} | North Star: ${northstar}
+Signal summary: ${S(s1.keySignalSummary)}
+Top themes: ${A(s2.themes).map(t=>S(t.name)).join(', ')}
+Strategic bet: ${S(s5.strategicBet)}
+Hypothesis: ${S(s5.hypothesis)}
+Kill criteria: ${A(s5.killCriteria).join('; ')}
+
+JSON structure:
+{
+  "format": "Amazon 6-Pager",
+  "title": "document title",
+  "sections": [
+    {"label":"Situation","content":"2-3 sentences: current state and why it matters now"},
+    {"label":"Tenets","content":"3 guiding principles (numbered)"},
+    {"label":"Goals","content":"success at 6 and 12 months"},
+    {"label":"The Plan","content":"what we build, in what order, and why"},
+    {"label":"What We Are Not Doing","content":"explicit exclusions with rationale"},
+    {"label":"FAQ","content":"3 tough VP questions with direct answers"}
+  ],
+  "ask": "what you are asking leadership to approve",
+  "confidence": 85
+}`
+      :`Write a Google PRFAQ. Return ONLY valid JSON, no markdown.
+
+Context: ${domain} | ${context} | North Star: ${northstar}
+Signal summary: ${S(s1.keySignalSummary)}
+Strategic bet: ${S(s5.strategicBet)}
+Hypothesis: ${S(s5.hypothesis)}
+
+JSON structure:
+{
+  "format": "Google PRFAQ",
+  "title": "document title",
+  "sections": [
+    {"label":"Press Release Headline","content":"one compelling headline as if announcing publicly"},
+    {"label":"The Problem","content":"problem and for whom — written for general audience"},
+    {"label":"The Solution","content":"what we built and why it is right"},
+    {"label":"User Quote","content":"realistic quote from a target user"},
+    {"label":"Internal FAQ","content":"3 hard VP/Director questions with direct answers"},
+    {"label":"External FAQ","content":"3 user/customer questions with direct answers"}
+  ],
+  "ask": "what you are asking leadership to approve",
+  "confidence": 85
+}`;
+
+    const s6=await callClaude(briefPrompt);
+    agentState.s6=s6;
+    removeLoading();
+    setRail(6,'done',N(s6.confidence));
+    addTrace('brief','Executive Brief','Brief ready',`<strong>${S(s6.format)}</strong> complete. Ask: <em>${S(s6.ask)}</em>`);
+    document.getElementById('traceLive').style.display='none';
+
+    const sectionsHtml=A(s6.sections).map(sec=>`
+      <div class="brief-section">
+        <div class="brief-sec-lbl">${S(sec.label)}</div>
+        <div class="brief-sec-body">${S(sec.content)}</div>
+      </div>`).join('');
+
+    appendBlock(`<div class="stage-block s6">
+      <div class="sb-header">
+        <div class="sb-ico">📋</div>
+        <div class="sb-titles"><div class="sb-stage">Stage 06 · Executive Brief</div><div class="sb-title">${S(s6.format)} · ${S(s6.title)}</div></div>
+        <div class="sb-conf"><div class="conf-label">Confidence</div><div class="conf-badge ${confClass(N(s6.confidence))}">${N(s6.confidence)}%</div></div>
+      </div>
+      <div class="sb-body">
+        ${sectionsHtml}
+        <div class="ask-box"><div class="bet-lbl">The Ask</div><div class="bet-hyp" style="color:var(--tx);font-weight:600;font-size:.88rem">${S(s6.ask)}</div></div>
+        <div class="brief-actions">
+          <button class="b-act primary" onclick="copyBrief()">Copy Full Brief</button>
+          <button class="b-act" onclick="window.print()">Export PDF</button>
+        </div>
+      </div></div>`);
+
+    setStatus('active','Agent complete');
+    document.getElementById('runBtn').disabled=false;
+    document.getElementById('runTxt').textContent='⚡ Run Again';
+
+  }catch(err){
+    removeLoading();
+    setStatus('','Error');
+    addTrace('ingest','Agent','Error',`<strong style="color:var(--red)">${err.message}</strong>`);
+    const out=document.getElementById('stageOutput');
+    const d=document.createElement('div');
+    d.innerHTML=`<div style="padding:1.5rem;background:rgba(248,113,113,.05);border:1px solid rgba(248,113,113,.2);border-radius:var(--r2);font-size:.82rem;color:var(--red)">${err.message}</div>`;
+    if(d.firstElementChild)out.appendChild(d.firstElementChild);
+    document.getElementById('runBtn').disabled=false;
+    document.getElementById('runTxt').textContent='⚡ Run APEX Agent';
+  }
+}
+
+function copyBrief(){
+  if(!agentState.s6)return;
+  const s6=agentState.s6;
+  const txt=[`# ${S(s6.title)}`,`Format: ${S(s6.format)}`,
+    ...A(s6.sections).map(s=>`\n## ${S(s.label)}\n${S(s.content)}`),
+    `\n## The Ask\n${S(s6.ask)}`].join('\n');
+  navigator.clipboard.writeText(txt).then(()=>{
+    const t=document.getElementById('toast');t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'),2500);
+  });
+}
+</script>
+</body>
+</html>
