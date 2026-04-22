@@ -553,10 +553,10 @@ function appendBlock(html){
 
 // ── API ───────────────────────────────────────────────────
 async function callClaude(prompt){
-  const res=await fetch("https://apex-proxy-hsjs.onrender.com",{
+  const res=await fetch("https://api.anthropic.com/v1/messages",{
     method:"POST",
     headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({model:"claude-haiku-4-5-20251001",max_tokens:4000,messages:[{role:"user",content:prompt}]})
+    body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:4000,messages:[{role:"user",content:prompt}]})
   });
   const data=await res.json();
   const raw=data.content.map(b=>b.text||'').join('');
@@ -864,6 +864,160 @@ JSON structure:
     setRail(6,'active');
     addTrace('brief','Executive Brief','Running',`Generating ${briefFormat==='amazon'?'Amazon 6-Pager':'Google PRFAQ'}...`);
     showLoading(out,'Stage 06 · Executive Brief',`Drafting ${briefFormat==='amazon'?'Amazon 6-Pager':'Google PRFAQ'}...`);
+
+    const briefPrompt=briefFormat==='amazon'
+      ?`You are a Principal PM at Amazon writing a 6-Pager. Return ONLY valid JSON, no markdown.
+
+Context: ${domain} | ${context} | North Star: ${northstar}
+Signal summary: ${S(s1.keySignalSummary)}
+Top themes: ${A(s2.themes).map(t=>S(t.name)).join(', ')}
+Strategic bet: ${S(s5.strategicBet)}
+Hypothesis: ${S(s5.hypothesis)}
+Sprint plan: ${A(s5.sprintPlan).map(p=>`${S(p.weeks)}: ${S(p.phase)} — ${S(p.deliverable)}`).join('; ')}
+Kill criteria: ${A(s5.killCriteria).join('; ')}
+Anti-portfolio: ${A(s3.antiPortfolio).join('; ')}
+
+Return this exact JSON:
+{
+  "format": "Amazon 6-Pager",
+  "title": "Compelling document title",
+  "situation": "3 paragraphs of narrative prose. Use actual metrics from the signals.",
+  "tenets": ["Tenet 1 with bold principle and explanation","Tenet 2","Tenet 3"],
+  "goals": "2 paragraphs. North star metric with target and rationale. 6-month and 12-month success picture.",
+  "metrics": [{"value":"target value","label":"metric name"},{"value":"target","label":"metric"},{"value":"target","label":"metric"}],
+  "plan": "4 paragraphs one per phase. Bold phase name and weeks. Full sentences.",
+  "notDoing": ["Exclusion 1 with rationale","Exclusion 2","Exclusion 3","Exclusion 4"],
+  "faq": [
+    {"q":"Hard VP question 1?","a":"Direct 2-3 sentence answer"},
+    {"q":"Hard VP question 2?","a":"Direct answer"},
+    {"q":"Hard VP question 3?","a":"Direct answer"}
+  ],
+  "ask": "2-3 sentences on resources, timeline, hypothesis, and what happens if Week 8 gate fails.",
+  "confidence": 85
+}`
+      :`You are a Senior PM at Google writing a PRFAQ. Return ONLY valid JSON, no markdown.
+
+Context: ${domain} | ${context} | North Star: ${northstar}
+Signal summary: ${S(s1.keySignalSummary)}
+Strategic bet: ${S(s5.strategicBet)}
+Hypothesis: ${S(s5.hypothesis)}
+Segment: ${segment}
+
+Return this exact JSON:
+{
+  "format": "Google PRFAQ",
+  "title": "Press release headline — compelling, specific, user-benefit focused",
+  "pressRelease": {
+    "lede": "Opening paragraph: who, what, when, where.",
+    "body": "2 paragraphs explaining what the product does and why it matters.",
+    "ceoQuote": "Quote from CEO — opinionated, mission-connected.",
+    "userQuote": "Quote from a realistic user — specific and emotional.",
+    "closing": "Final paragraph: availability and what users should do next."
+  },
+  "internalFaq": [
+    {"tag":"Leadership","q":"Business case question?","a":"Direct answer with data"},
+    {"tag":"Engineering","q":"Technical tradeoff question?","a":"Direct answer"},
+    {"tag":"Product","q":"Risk or scope question?","a":"Direct answer"}
+  ],
+  "externalFaq": [
+    {"tag":"User","q":"How does it work?","a":"Plain language answer"},
+    {"tag":"User","q":"Control or privacy question?","a":"Reassuring answer"},
+    {"tag":"Creator","q":"Creator-side question?","a":"Creator benefit answer"}
+  ],
+  "ask": "2-3 sentences on approval needed, hypothesis, and go/no-go gate.",
+  "confidence": 85
+}`;
+
+    const s6=await callClaude(briefPrompt);
+    agentState.s6=s6;
+    removeLoading();
+    setRail(6,'done',N(s6.confidence));
+    addTrace('brief','Executive Brief','Brief ready',`<strong>${S(s6.format||briefFormat)}</strong> complete. Ask: <em>${S(s6.ask)}</em>`);
+    document.getElementById('traceLive').style.display='none';
+
+    // ── RENDER BRIEF ──────────────────────────────────────
+    const briefNow=new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+    const briefIsAmazon=briefFormat==='amazon';
+
+    function bSec(num,title,content){
+      return `<div class="brief-amazon-sec"><div class="brief-sec-title"><span class="brief-sec-num">${num}</span>${title}</div>${content}</div>`;
+    }
+
+    let finalBriefHtml='';
+
+    if(briefIsAmazon){
+      const bTenets=A(s6.tenets||[]).map((t,i)=>`<div class="brief-tenet"><div class="brief-tenet-num">${i+1}</div><div class="brief-tenet-text">${S(t).replace(/^\d+\.\s*/,'')}</div></div>`).join('');
+      const bMetrics=A(s6.metrics||[]).map((m,i)=>{const c=['var(--green)','var(--a2)','var(--blue)'][i%3];return `<div class="brief-metric-chip"><div class="brief-metric-num" style="color:${c}">${S(m.value)}</div><div class="brief-metric-lbl">${S(m.label)}</div></div>`;}).join('');
+      const bNotDoing=A(s6.notDoing||[]).map(n=>`<div class="brief-not-doing-item"><span class="brief-nd-dash">—</span><span>${S(n)}</span></div>`).join('');
+      const bFaq=A(s6.faq||[]).map(f=>`<div class="brief-faq-item"><div class="brief-faq-q"><span class="brief-faq-q-ico">Q</span>${S(f.q||f.question||'')}</div><div class="brief-faq-a">${S(f.a||f.answer||'')}</div></div>`).join('');
+
+      finalBriefHtml=`<div class="brief-doc">
+        <div class="brief-doc-header">
+          <div class="brief-classification">Internal · Product Review Document · Confidential</div>
+          <div class="brief-doc-title">${S(s6.title)}</div>
+          <div class="brief-doc-meta">
+            <div class="brief-doc-meta-item">Date: <span>${briefNow}</span></div>
+            <div class="brief-doc-meta-item">Status: <span>Draft — For Review</span></div>
+            <div class="brief-doc-meta-item">Agent Confidence: <span>${N(s6.confidence)}%</span></div>
+          </div>
+        </div>
+        ${bSec('01','Situation',`<p class="brief-prose">${S(s6.situation||s1.keySignalSummary)}</p>`)}
+        ${bSec('02','Tenets',bTenets||`<p class="brief-prose">${S(A(s6.tenets||[])[0]||s5.strategicBet)}</p>`)}
+        ${bSec('03','Goals',`<p class="brief-prose">${S(s6.goals||s5.hypothesis)}</p>${bMetrics?`<div class="brief-metrics-row">${bMetrics}</div>`:''}`)}
+        ${bSec('04','The Plan',`<p class="brief-prose">${S(s6.plan||A(s5.sprintPlan).map(p=>`${S(p.weeks)}: ${S(p.phase)} — ${S(p.deliverable)}`).join('. '))}</p>`)}
+        ${bSec('05','What We Are Not Doing',bNotDoing?`<div class="brief-not-doing"><div class="brief-not-doing-lbl">Out of Scope — This Sprint</div>${bNotDoing}</div>`:`<p class="brief-prose">${A(s3.antiPortfolio).join('; ')}</p>`)}
+        ${bSec('06','Frequently Asked Questions',bFaq||'<p class="brief-prose">No FAQ generated.</p>')}
+        <div class="the-ask"><div class="ask-eyebrow">The Ask</div><p class="ask-body">${S(s6.ask)}</p></div>
+      </div>`;
+
+    } else {
+      const pr=s6.pressRelease||{};
+      const bIntFaq=A(s6.internalFaq||[]).map(f=>`<div class="prfaq-faq-item"><div class="prfaq-faq-q"><span class="prfaq-faq-tag">${S(f.tag||'Internal')}</span>${S(f.q||'')}</div><div class="prfaq-faq-a">${S(f.a||'')}</div></div>`).join('');
+      const bExtFaq=A(s6.externalFaq||[]).map(f=>`<div class="prfaq-faq-item"><div class="prfaq-faq-q"><span class="prfaq-faq-tag blue">${S(f.tag||'User')}</span>${S(f.q||'')}</div><div class="prfaq-faq-a">${S(f.a||'')}</div></div>`).join('');
+
+      finalBriefHtml=`<div class="brief-doc">
+        <div class="pr-shell">
+          <div class="pr-masthead">
+            <div class="pr-label">Press Release · Embargoed Until Launch</div>
+            <div class="pr-headline">${S(s6.title)}</div>
+            <div class="pr-dateline"><span>${domain}</span> · <span>${briefNow}</span></div>
+          </div>
+          <div class="pr-body">
+            <p class="pr-prose">${S(pr.lede||s1.keySignalSummary)}</p>
+            <p class="pr-prose">${S(pr.body||s5.strategicBet)}</p>
+            ${pr.ceoQuote?`<div class="pr-quote"><div class="pr-quote-text">"${S(pr.ceoQuote)}"</div><div class="pr-quote-attr">— CEO, ${domain}</div></div>`:''}
+            ${pr.userQuote?`<div class="pr-quote"><div class="pr-quote-text">"${S(pr.userQuote)}"</div><div class="pr-quote-attr">— ${segment}</div></div>`:''}
+            <p class="pr-prose">${S(pr.closing||'')}</p>
+          </div>
+        </div>
+        <div style="margin-bottom:1.5rem">
+          <div class="prfaq-sec-title">Internal FAQ — Leadership & Engineering</div>
+          ${bIntFaq||'<p style="font-size:.82rem;color:var(--t3)">No internal FAQ generated.</p>'}
+        </div>
+        <div style="margin-bottom:1.5rem">
+          <div class="prfaq-sec-title">External FAQ — Users & Customers</div>
+          ${bExtFaq||'<p style="font-size:.82rem;color:var(--t3)">No external FAQ generated.</p>'}
+        </div>
+        <div class="the-ask"><div class="ask-eyebrow">The Ask</div><p class="ask-body">${S(s6.ask)}</p></div>
+      </div>`;
+    }
+
+    appendBlock(`<div class="stage-block s6">
+      <div class="sb-header">
+        <div class="sb-ico">📋</div>
+        <div class="sb-titles">
+          <div class="sb-stage">Stage 06 · Executive Brief</div>
+          <div class="sb-title">${briefFormat==='amazon'?'Amazon 6-Pager':'Google PRFAQ'} · ${S(s6.title)}</div>
+        </div>
+        <div class="sb-conf"><div class="conf-label">Confidence</div><div class="conf-badge ${confClass(N(s6.confidence))}">${N(s6.confidence)}%</div></div>
+      </div>
+      <div class="sb-body">
+        ${finalBriefHtml}
+        <div class="brief-actions" style="margin-top:1rem">
+          <button class="b-act primary" onclick="copyBrief()">Copy as Markdown</button>
+          <button class="b-act" onclick="window.print()">Export PDF</button>
+        </div>
+      </div></div>`);
 
     const briefPrompt=briefFormat==='amazon'
       ?`Write an Amazon 6-Pager executive brief. Return ONLY valid JSON, no markdown.
